@@ -30,7 +30,7 @@ namespace evaBACKEND.Controllers
             _configuration = configuration;
         }
 
-        [Route("create")]
+        [Route("register")]
         [HttpPost]
         public async Task<IActionResult> CreateUserAsync([FromBody] UserModel model)
         {
@@ -38,13 +38,35 @@ namespace evaBACKEND.Controllers
             {
                 return BadRequest("User model is invalid");
             }
-            var user = new AppUser { UserName = model.Username, Email = model.Email };
+            var user = new AppUser { UserName = model.Email, Email = model.Email };
             var result = await _userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
                 return BuildToken(model);
             }
-            return BadRequest($"User with username: {model.Username} already exist.!");
+            return BadRequest($"User with email: {model.Email} already exist.!");
+        }
+
+        [Route("login")]
+        [HttpPost]
+        public async Task<IActionResult> Login([FromBody] UserModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                return BadRequest(new { message = "User doesn't exist" });
+            }
+            var result = await _signInManager.PasswordSignInAsync(user, model.Password, true, lockoutOnFailure: false);
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return BadRequest(ModelState);
+            }
+            return BuildToken(model);
         }
 
         private IActionResult BuildToken(UserModel model)
