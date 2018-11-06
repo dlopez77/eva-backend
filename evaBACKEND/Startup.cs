@@ -35,7 +35,6 @@ namespace evaBACKEND
         {            
 
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-            
             services.AddAuthentication(options =>
                 {
                     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -63,7 +62,7 @@ namespace evaBACKEND
                      };
                  });
 
-            services.AddIdentityCore<AppUser>()
+            services.AddIdentity<AppUser, IdentityRole>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders()
                 .AddSignInManager<SignInManager<AppUser>>()
