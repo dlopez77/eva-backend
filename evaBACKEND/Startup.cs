@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using evaBACKEND.Data;
+using evaBACKEND.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -76,9 +77,13 @@ namespace evaBACKEND
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env,
+			AppDbContext context, RoleManager<IdentityRole> roleManager,
+			UserManager<AppUser> userManager)
         {
-            if (env.IsDevelopment())
+			DummyData.Initialize(context, roleManager, userManager).Wait();
+
+			if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
