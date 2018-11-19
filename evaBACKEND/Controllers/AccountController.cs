@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using evaBACKEND.Data;
 using evaBACKEND.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -32,24 +33,26 @@ namespace evaBACKEND.Controllers
 
         [Route("register")]
         [HttpPost]
-        public async Task<IActionResult> CreateUserAsync([FromBody] UserModel model)
+		public async Task<IActionResult> CreateUserAsync([FromBody] UserModel model)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest("User model is invalid");
             }
-            var user = new AppUser { UserName = model.Email, Email = model.Email };
+            var user = new AppUser { UserName = model.Email, Email = model.Email,
+				FirstName = model.FirstName, LastName = model.LastName };
             var result = await _userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
-                return BuildToken(model);
+				await _userManager.AddToRoleAsync(user, model.Role);
+				return BuildToken(model);
             }
             return BadRequest($"User with email: {model.Email} already exist.!");
         }
 
         [Route("login")]
         [HttpPost]
-        public async Task<IActionResult> Login([FromBody] UserModel model)
+        public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -66,7 +69,10 @@ namespace evaBACKEND.Controllers
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                 return BadRequest(ModelState);
             }
-            return BuildToken(model);
+			var userPrincipal = new UserModel();
+			userPrincipal.Email = model.Email;
+			userPrincipal.Password = model.Password;
+            return BuildToken(userPrincipal);
         }
 
         private IActionResult BuildToken(UserModel model)
