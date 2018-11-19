@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using evaBACKEND.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -13,5 +14,9 @@ namespace evaBACKEND.Data
             : base(options)
         {
         }
+
+        public DbSet<Course> Courses { get; set; }
+
+        public DbSet<evaBACKEND.Models.Task> Task { get; set; }
     }
 }
