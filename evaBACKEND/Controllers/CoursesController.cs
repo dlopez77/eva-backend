@@ -7,25 +7,33 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using evaBACKEND.Data;
 using evaBACKEND.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Identity;
 
 namespace evaBACKEND.Controllers
 {
-    [Route("api/course")]
-    [ApiController]
-    public class CoursesController : ControllerBase
-    {
-        private readonly AppDbContext _context;
+	[Route("api/course")]
+	[ApiController]
+	public class CoursesController : ControllerBase
+	{
+		private readonly AppDbContext _context;
+		private readonly UserManager<AppUser> _userManager;
 
-        public CoursesController(AppDbContext context)
-        {
-            _context = context;
-        }
+		public CoursesController(AppDbContext context, UserManager<AppUser> userManager)
+		{
+			_context = context;
+			_userManager = userManager;
+		}
 
-        // GET: api/Courses
-        [HttpGet]
-        public IEnumerable<Course> GetCourses()
+		// GET: api/Courses
+		[HttpGet]
+		[Authorize]
+		public async Task<IActionResult> GetCourses()
         {
-            return _context.Courses;
+			//var currentUser = await _userManager.GetUserAsync(HttpContext.User);
+			return Ok(_context.Courses);
+
         }
 
         // GET: api/Courses/5
