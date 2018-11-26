@@ -40,6 +40,10 @@ namespace evaBACKEND.Controllers
         [HttpPost]
 		public async Task<IActionResult> CreateUserAsync([FromBody] UserModel model)
         {
+			if (!HttpContext.User.IsInRole("Admin"))
+			{
+				return Unauthorized();
+			}
             if (!ModelState.IsValid)
             {
                 return BadRequest("User model is invalid");

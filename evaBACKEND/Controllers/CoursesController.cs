@@ -31,9 +31,7 @@ namespace evaBACKEND.Controllers
 		[Authorize]
 		public async Task<IActionResult> GetCourses()
         {
-			//var currentUser = await _userManager.GetUserAsync(HttpContext.User);
 			return Ok(_context.Courses);
-
         }
 
         // GET: api/Courses/5
