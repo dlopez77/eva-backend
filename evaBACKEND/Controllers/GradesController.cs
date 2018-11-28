@@ -12,56 +12,56 @@ namespace evaBACKEND.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CoursesController : ControllerBase
+    public class GradesController : ControllerBase
     {
         private readonly AppDbContext _context;
 
-        public CoursesController(AppDbContext context)
+        public GradesController(AppDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/Courses
+        // GET: api/Grades
         [HttpGet]
-        public IEnumerable<Course> GetCourses()
+        public IEnumerable<Grade> GetGrades()
         {
-            return _context.Courses;
+            return _context.Grades;
         }
 
-        // GET: api/Courses/5
+        // GET: api/Grades/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetCourse([FromRoute] long id)
+        public async Task<IActionResult> GetGrade([FromRoute] long id)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var course = await _context.Courses.FindAsync(id);
+            var grade = await _context.Grades.FindAsync(id);
 
-            if (course == null)
+            if (grade == null)
             {
                 return NotFound();
             }
 
-            return Ok(course);
+            return Ok(grade);
         }
 
-        // PUT: api/Courses/5
+        // PUT: api/Grades/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCourse([FromRoute] long id, [FromBody] Course course)
+        public async Task<IActionResult> PutGrade([FromRoute] long id, [FromBody] Grade grade)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (id != course.ID)
+            if (id != grade.ID)
             {
                 return BadRequest();
             }
 
-            _context.Entry(course).State = EntityState.Modified;
+            _context.Entry(grade).State = EntityState.Modified;
 
             try
             {
@@ -69,7 +69,7 @@ namespace evaBACKEND.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CourseExists(id))
+                if (!GradeExists(id))
                 {
                     return NotFound();
                 }
@@ -82,45 +82,45 @@ namespace evaBACKEND.Controllers
             return NoContent();
         }
 
-        // POST: api/Courses
+        // POST: api/Grades
         [HttpPost]
-        public async Task<IActionResult> PostCourse([FromBody] Course course)
+        public async Task<IActionResult> PostGrade([FromBody] Grade grade)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            _context.Courses.Add(course);
+            _context.Grades.Add(grade);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetCourse", new { id = course.ID }, course);
+            return CreatedAtAction("GetGrade", new { id = grade.ID }, grade);
         }
 
-        // DELETE: api/Courses/5
+        // DELETE: api/Grades/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCourse([FromRoute] long id)
+        public async Task<IActionResult> DeleteGrade([FromRoute] long id)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var course = await _context.Courses.FindAsync(id);
-            if (course == null)
+            var grade = await _context.Grades.FindAsync(id);
+            if (grade == null)
             {
                 return NotFound();
             }
 
-            _context.Courses.Remove(course);
+            _context.Grades.Remove(grade);
             await _context.SaveChangesAsync();
 
-            return Ok(course);
+            return Ok(grade);
         }
 
-        private bool CourseExists(long id)
+        private bool GradeExists(long id)
         {
-            return _context.Courses.Any(e => e.ID == id);
+            return _context.Grades.Any(e => e.ID == id);
         }
     }
 }
