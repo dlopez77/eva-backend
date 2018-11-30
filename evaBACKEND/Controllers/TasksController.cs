@@ -10,7 +10,7 @@ using evaBACKEND.Models;
 
 namespace evaBACKEND.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/task")]
     [ApiController]
     public class TasksController : ControllerBase
     {
@@ -23,9 +23,9 @@ namespace evaBACKEND.Controllers
 
         // GET: api/Tasks
         [HttpGet]
-        public IEnumerable<Models.Task> GetTasks()
+        public IEnumerable<Models.Task> GetTask()
         {
-            return _context.Tasks;
+            return _context.Task;
         }
 
         // GET: api/Tasks/5
@@ -37,7 +37,7 @@ namespace evaBACKEND.Controllers
                 return BadRequest(ModelState);
             }
 
-            var task = await _context.Tasks.FindAsync(id);
+            var task = await _context.Task.FindAsync(id);
 
             if (task == null)
             {
@@ -91,7 +91,7 @@ namespace evaBACKEND.Controllers
                 return BadRequest(ModelState);
             }
 
-            _context.Tasks.Add(task);
+            _context.Task.Add(task);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetTask", new { id = task.ID }, task);
@@ -106,13 +106,13 @@ namespace evaBACKEND.Controllers
                 return BadRequest(ModelState);
             }
 
-            var task = await _context.Tasks.FindAsync(id);
+            var task = await _context.Task.FindAsync(id);
             if (task == null)
             {
                 return NotFound();
             }
 
-            _context.Tasks.Remove(task);
+            _context.Task.Remove(task);
             await _context.SaveChangesAsync();
 
             return Ok(task);
@@ -120,7 +120,7 @@ namespace evaBACKEND.Controllers
 
         private bool TaskExists(long id)
         {
-            return _context.Tasks.Any(e => e.ID == id);
+            return _context.Task.Any(e => e.ID == id);
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using evaBACKEND.Data;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -15,12 +14,13 @@ namespace evaBACKEND.Models
 
         public String Description { get; set; }
 
-        public AppUser Teacher { get; set; }
+        public String Teacher { get; set; }
 
         [NotMapped]
-        public List<AppUser> Students { get; set; }
+        public List<String> Students { get; set; }
 
         public DateTime StartDate { get; set; }
-		
+
+        public DateTime EndDate { get; set; }
     }
 }
