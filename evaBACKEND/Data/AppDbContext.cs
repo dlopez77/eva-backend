@@ -17,6 +17,8 @@ namespace evaBACKEND.Data
 
         public DbSet<Course> Courses { get; set; }
 
-        public DbSet<evaBACKEND.Models.Task> Task { get; set; }
+        public DbSet<evaBACKEND.Models.Task> Tasks { get; set; }
+
+		public DbSet<Grade> Grades { get; set; }
     }
 }
