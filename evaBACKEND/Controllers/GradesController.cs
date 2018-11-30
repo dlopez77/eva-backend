@@ -82,7 +82,6 @@ namespace evaBACKEND.Controllers
             return NoContent();
         }
 
-        // POST: api/Grades
         [HttpPost]
         public async Task<IActionResult> PostGrade([FromBody] Grade grade)
         {
