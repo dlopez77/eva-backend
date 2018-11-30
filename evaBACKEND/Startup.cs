@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using evaBACKEND.Data;
+using evaBACKEND.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -21,76 +22,76 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace evaBACKEND
 {
-    public class Startup
-    {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+	public class Startup
+	{
+		public Startup(IConfiguration configuration)
+		{
+			Configuration = configuration;
+		}
 
-        public IConfiguration Configuration { get; }
+		public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
-        {            
+		// This method gets called by the runtime. Use this method to add services to the container.
+		public void ConfigureServices(IServiceCollection services)
+		{
+			services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-            services.AddAuthentication(options =>
-                {
-                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                    options.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
-                })
+			services.AddDbContext<AppDbContext>(options => options.UseSqlServer(Configuration["ConnectionString:LocalServer"]));
 
-                .AddJwtBearer(options =>
-                 {
-                     options.RequireHttpsMetadata = false;
-                     options.SaveToken = true;
-                     options.TokenValidationParameters = new TokenValidationParameters
-                     {
-                         ValidateIssuer = true,
-                         ValidateAudience = true,
-                         ValidateLifetime = true,
-                         ValidateIssuerSigningKey = true,
+			services.AddIdentity<AppUser, IdentityRole>()
+					.AddEntityFrameworkStores<AppDbContext>()
+					.AddDefaultTokenProviders()
+					.AddSignInManager<SignInManager<AppUser>>()
+					.AddUserManager<UserManager<AppUser>>();
 
-                         ValidIssuer = Configuration["Jwt:Issuer"],
-                         ValidAudience = Configuration["Jwt:Issuer"],
+			services.AddAuthentication(options => {
+				options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+				options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+				options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+			})
+			.AddJwtBearer(options => {
+				options.SaveToken = true;
+				options.RequireHttpsMetadata = true;
 
-                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"])),
-                         ClockSkew = TimeSpan.Zero
-                     };
-                 });
+				options.TokenValidationParameters = new TokenValidationParameters
+				{
+					ValidateIssuer = true,
+					ValidateAudience = true,
+					ValidateLifetime = true,
+					ValidateIssuerSigningKey = true,
 
-            services.AddIdentity<AppUser, IdentityRole>()
-                .AddEntityFrameworkStores<AppDbContext>()
-                .AddDefaultTokenProviders()
-                .AddSignInManager<SignInManager<AppUser>>()
-                .AddUserManager<UserManager<AppUser>>()
-                .AddDefaultTokenProviders();
+					ValidIssuer = Configuration["Jwt:Issuer"],
+					ValidAudience = Configuration["Jwt:Issuer"],
 
+					IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"])),
+				};
+			});
 
-            services.AddCors();
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-            services.AddDbContext<AppDbContext>(options => options.UseSqlServer(Configuration["ConnectionString:LocalServer"]));
-        }
+			services.AddHttpContextAccessor();
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseHsts();
-            }
+		}
 
-            app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().AllowCredentials());
-            app.UseAuthentication();
-            app.UseHttpsRedirection();
-            app.UseMvc();
-        }
-    }
+		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+		public void Configure(IApplicationBuilder app, IHostingEnvironment env,
+			AppDbContext context, RoleManager<IdentityRole> roleManager,
+			UserManager<AppUser> userManager)
+		{
+			DummyData.Initialize(context, roleManager, userManager).Wait();
+
+			if (env.IsDevelopment())
+			{
+				app.UseDeveloperExceptionPage();
+			}
+			else
+			{
+				app.UseHsts();
+			}
+
+			//app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().AllowCredentials());
+			//app.UseIdentity();
+			app.UseAuthentication();
+			app.UseHttpsRedirection();
+			app.UseMvc();
+		}
+	}
 }

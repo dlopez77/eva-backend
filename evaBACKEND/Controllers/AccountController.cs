@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using evaBACKEND.Data;
 using evaBACKEND.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -21,37 +22,51 @@ namespace evaBACKEND.Controllers
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
-        private readonly IConfiguration _configuration;
+		private readonly RoleManager<IdentityRole> _roleManager;
+		private readonly IConfiguration _configuration;
 
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IConfiguration configuration)
+        public AccountController(UserManager<AppUser> userManager, 
+			SignInManager<AppUser> signInManager,
+			RoleManager<IdentityRole> roleManager,
+			IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+			_roleManager = roleManager;
             _configuration = configuration;
         }
 
         [Route("register")]
         [HttpPost]
-        public async Task<IActionResult> CreateUserAsync([FromBody] UserModel model)
+		public async Task<IActionResult> CreateUserAsync([FromBody] UserModel model)
         {
+			if (!HttpContext.User.IsInRole("Admin"))
+			{
+				return Unauthorized();
+			}
             if (!ModelState.IsValid)
             {
                 return BadRequest("User model is invalid");
             }
-            var user = new AppUser { UserName = model.Email, Email = model.Email };
+            var user = new AppUser { UserName = model.Email, Email = model.Email,
+				FirstName = model.FirstName, LastName = model.LastName };
             var result = await _userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
-                return BuildToken(model);
+				await _userManager.AddToRoleAsync(user, model.Role);
+				return await BuildTokenAsync(model);
             }
             return BadRequest($"User with email: {model.Email} already exist.!");
         }
 
-        [Route("login")]
+		[AllowAnonymous]
+		[Route("login")]
         [HttpPost]
-        public async Task<IActionResult> Login([FromBody] UserModel model)
+        public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
-            if (!ModelState.IsValid)
+			IActionResult response = Unauthorized();
+
+			if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
@@ -66,29 +81,35 @@ namespace evaBACKEND.Controllers
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                 return BadRequest(ModelState);
             }
-            return BuildToken(model);
+			var userPrincipal = new UserModel();
+			userPrincipal.Email = model.Email;
+			userPrincipal.Password = model.Password;
+            return await BuildTokenAsync(userPrincipal);
         }
 
-        private IActionResult BuildToken(UserModel model)
+        private async Task<IActionResult> BuildTokenAsync(UserModel model)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+			var principal = await _userManager.FindByEmailAsync(model.Email);
+			var rolesByUser = await _userManager.GetRolesAsync(principal);
 
-            var expiration = DateTime.UtcNow.AddDays(7);
+            var expiration = DateTime.UtcNow.AddHours(1);
 
-            var claims = new[]
-{
-                new Claim(JwtRegisteredClaimNames.UniqueName, model.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+			var claims = new List<Claim>
+			{ 
+				new Claim(JwtRegisteredClaimNames.Sub, model.Email),
+				new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+				new Claim("roles", rolesByUser.First())
             };
 
-            JwtSecurityToken token = new JwtSecurityToken(
-               issuer: _configuration["Jwt:Issuer"],
-               audience: _configuration["Jwt:Issuer"],
-               claims: claims,
-               expires: expiration,
-               signingCredentials: creds);
-
+			JwtSecurityToken token = new JwtSecurityToken(
+			   issuer: _configuration["Jwt:Issuer"],
+			   audience: _configuration["Jwt:Issuer"],
+			   claims: claims,
+			   expires: expiration,
+			   signingCredentials: creds
+			);
             return Ok(new
             {
                 token = new JwtSecurityTokenHandler().WriteToken(token)
